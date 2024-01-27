@@ -33,7 +33,7 @@ On parle souvent d'"objets" lorsqu'il s'agit d'AD. Qu'est-ce qu'un objet ? Un ob
 
 
 
-![Photo][./pic/adobjects.png]
+![Photo](./pic/adobjects.png)
 
 
 
