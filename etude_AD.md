@@ -30,7 +30,13 @@ Le fichier `NTDS.DIT` peut être considéré comme le cœur d'Active Directory. 
 ## Active Directory Objects
 On parle souvent d'"objets" lorsqu'il s'agit d'AD. Qu'est-ce qu'un objet ? Un objet peut être défini comme TOUTE ressource présente dans un environnement Active Directory, comme les OU, les imprimantes, les utilisateurs, les contrôleurs de domaine.
 
-![Object]{./adobjects.png}
+
+
+
+![Photo][./pic/adobjects.png]
+
+
+
 
 - Domain Controllers
 Les contrôleurs de domaine sont essentiellement le cerveau d'un réseau AD. Ils traitent les demandes d'authentification, vérifient les utilisateurs sur le réseau et contrôlent qui peut accéder aux différentes ressources du domaine. Toutes les demandes d'accès sont validées par le contrôleur de domaine et les demandes d'accès privilégié sont basées sur les rôles prédéterminés attribués aux utilisateurs. Il applique également les politiques de sécurité et stocke des informations sur tous les autres objets du domaine.
