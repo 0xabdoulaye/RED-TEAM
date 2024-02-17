@@ -38,7 +38,7 @@ reg query HKLM\SOFTWARE\Policies\Microsoft\Windows\Installer
 ```
 Comme nous pouvons le voir dans la sortie, le registre nommé "AlwaysInstallElevated" existe avec une valeur dword (REG_WORD) de 0x1, ce qui signifie que la stratégie AlwaysInstallElevated est activée.
 
-- Privilege Escalation via .msi payload (1st Method)
+- Privilege Escalation via .msi payload 
 La premiere methode est de creer un payload en `.msi` ensuite l'executer avec `msiexec /quiet /qn /i`
 /quiet = Supprime tout message à l'utilisateur pendant l'installation
 /qn = Pas d'interface graphique
