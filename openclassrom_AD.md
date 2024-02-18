@@ -223,3 +223,41 @@ PORT      STATE    SERVICE
 49157/tcp open     unknown
 49161/tcp open     unknown
 ```
+
+Parmi ces services, voici quelques vulnérabilités que je trouve régulièrement, et qui me permettent de prendre la main sur la machine lorsqu’elle est exploitée :
+`MS17-010` est une vulnérabilité sur le service SMB des machines Windows. Elle a été corrigée en 2017, mais vous trouverez régulièrement des  machines qui ne sont plus mises à jour dans un système d’information. Pour identifier des machines vulnérables, l’outil nmap vous sera utile.
+```
+└─# nmap --script smb-vuln-ms17-010.nse -p445 --open 212.83.142.0/24
+
+
+```
+
+## Profitez d’une politique de mot de passe faible
+Vous avez découvert la politique de mot de passe de l’entreprise lors de votre phase de reconnaissance. La connaître vous permettra de tenter de trouver des premiers identifiants valides mais faibles.
+
+Pour cela, vous pouvez faire du `password spraying`. Cela signifie que vous allez tenter d’utiliser un mot de passe simple sur tout ou partie des utilisateurs du domaine.
+Il existe d’ailleurs beaucoup d’outils pour vérifier la validité d’un mot de passe sur plusieurs comptes. L’outil SprayHound en est un.
+
+`sprayhound -U ./utilisateurs.txt -p Medicex1 -d medic.ex -dc 10.10.10.2`
+le mot de passe Medicex1 sera testé sur la liste des utilisateurs fournie dans le fichier utilisateurs.txt.
+
+Enfin, une technique qui peut parfois fonctionner, c'est le user-as-pass. Vous allez chercher les utilisateurs pour lesquels le mot de passe est exactement leur nom d’utilisateur. Cela arrive régulièrement, et vous pourrez trouver des comptes comme test ayant pour mot de passe test, ou encore servicesql ayant également comme mot de passe servicesql.
+SprayHound est capable de faire ces tests. Pour cela, vous pouvez utiliser les mêmes lignes de commande que précédemment, sauf que vous ne précisez pas de mot de passe à tester. Vous pourrez alors fournir une liste de noms d’utilisateurs ( -U  ), ou fournir un premier compte ( -lu  et -lp  ).
+```
+sprayhound -U ./utilisateurs.txt -d medic.ex -dc 10.10.10.2
+sprayhound -d medic.ex -dc 10.10.10.2 -lu pixis -lp P4ssw0rd
+```
+
+## responder
+Se mettre en position de man-in-the-middle (homme du milieu) n’est jamais anodin. Il existe un risque que vous interfériez avec le travail d’un collaborateur, en bloquant temporairement un accès à un serveur légitime, par exemple. Faites donc toujours attention lorsque vous faites des attaques au niveau du réseau.
+- L’outil Responder vous permet de faire ça automatiquement, en précisant l’interface réseau qu’il doit utiliser pour se mettre en écoute des sollicitations LLMNR et NBT-NS.
+Vous récolterez parfois des identifiants en clair, mais plus souvent des hashs NTLMv1 ou NTLMv2, en fonction de la version de NTLM configurée pour les machines attaquées. Ces condensats doivent ensuite être cassés, avec l’outil hashcat, par exemple.
+
+## En résumé
+
+Vous connaissez maintenant plusieurs techniques qui peuvent être appliquées pour prendre la main sur un premier compte. Les voici dans l’ordre dans lequel je les applique personnellement pendant mes tests d’intrusion :
+
+- exploiter les systèmes et applications vulnérables ;
+- profiter des mots de passe par défaut ;
+- compromettre un utilisateur via du password spraying ;
+- compromettre un utilisateur ou une machine via une attaque réseau,  en se positionnant en homme du milieu.
