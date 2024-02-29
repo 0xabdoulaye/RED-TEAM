@@ -173,6 +173,10 @@ Un fichier nomme `UserInfo`, humm Let's reverse
 ```
 └─# file UserInfo.exe   
 UserInfo.exe: PE32 executable (console) Intel 80386 Mono/.Net assembly, for MS Windows, 3 sections
+```
+
+Je trouve un nom `armando`
+```
 
 
 ```
