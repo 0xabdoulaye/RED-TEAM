@@ -57,3 +57,7 @@ stockApi=http://192.168.0.173:8080/admin&storeId=1
 
 - **Exemple 3: SSRF aveugle avec détection hors bande**
 Ce site utilise un logiciel d'analyse qui récupère l'URL spécifiée dans l'en-tête Referer lorsqu'une page de produit est chargée.
+SSRF est une vulnérabilité de sécurité des applications web qui permet à l'attaquant de forcer le serveur à faire des requêtes non autorisées à n'importe quelle source locale ou externe au nom du serveur web. La SSRF permet à un pirate d'interagir avec des systèmes internes, ce qui peut entraîner des fuites de données, des interruptions de service, voire l'exécution de codes à distance.
+
+## Basic SSRF
+Le SSRF de base est une technique d'attaque sur le web par laquelle un pirate incite un serveur à effectuer des requêtes en son nom, souvent en ciblant des systèmes internes ou des services tiers. En exploitant les vulnérabilités de la validation des entrées, l'attaquant peut obtenir un accès non autorisé à des informations sensibles ou contrôler des ressources distantes, ce qui représente un risque de sécurité important pour l'application ciblée et son infrastructure sous-jacente.
