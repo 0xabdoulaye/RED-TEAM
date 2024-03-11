@@ -4,7 +4,7 @@
 - Search
 - Reel
 - Reel2
-
+- TimeLapse (Easy)
 - https://github.com/Ignitetechnologies/HackTheBox-CTF-Writeups
 - https://github.com/Ignitetechnologies/Windows-Privilege-Escalation
 
