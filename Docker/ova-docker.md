@@ -57,10 +57,10 @@ root@Hacking-VM:~/files# docker import Myimage.gz hundred_box
 
 ```
 
-Je vais donc lancer la Machine et activer les services 
+Je vais donc lancer la Machine et activer les services  
 
 ```sh
-root@Hacking-VM:~# docker run -dt --network=host hundred_box bash
+root@Hacking-VM:~# docker run -dt --network=host --ip 10.8.0.4 uvalde bash
 root@Hacking-VM:/# service --status-all
  [ - ]  apparmor
  [ - ]  console-setup.sh
@@ -78,4 +78,54 @@ root@Hacking-VM:/# service --status-all
  [ + ]  vsftpd
 
 
+```
+
+
+
+
+## Create Network
+
+```sh
+root@Hacking-VM:~/files# docker network create -d bridge -o 'com.docker.network.bridge.name'='vpn' --subnet=172.18.0.1/16 vpn
+6d6d18e89c1073c123ce766068fb83774b91a8ffd3799257ea69e878dd251b36
+root@Hacking-VM:~/files# docker network ls
+NETWORK ID     NAME      DRIVER    SCOPE
+d8844bf4d84d   bridge    bridge    local
+2a4b7a243ac4   host      host      local
+cad1049a8905   none      null      local
+6d6d18e89c10   vpn       bridge    local
+root@Hacking-VM:~/files# 
+
+
+```
+
+
+```sh
+root@Hacking-VM:~# docker run --cap-add=NET_ADMIN --device /dev/net/tun:/dev/net/tun -dt uvalde /bin/bash
+9657a92ae2704e9241d82dac917c84c93a4d3a105dff7fc2c30c43080ad3ca43
+root@Hacking-VM:~# 
+root@Hacking-VM:~# docker ps
+CONTAINER ID   IMAGE     COMMAND       CREATED              STATUS              PORTS     NAMES
+9657a92ae270   uvalde    "/bin/bash"   About a minute ago   Up About a minute             tender_ptolemy
+root@Hacking-VM:~# docker exec -it tender_ptolemy bash
+root@9657a92ae270:/# 
+
+root@Hacking-VM:~# docker cp box.ovpn adoring_meitner:/root 
+root@5889466ea304:~# openvpn box.ovpn &       
+
+```
+
+I run openvpn inside the docker
+Run apache2 if error, remove the `/var/lock` and create `mkdir -p /var/lock/apache2`
+
+
+```sh
+root@5889466ea304:~# service --status-all | grep + | awk '{print $4}' | while read -r service_name; do service "$service_name" start; done
+
+```
+
+Pourque ca active les (-)
+
+```sh
+service --status-all | grep -E '\[ - \]|\[ + \]' | awk '{print $4}' | while read -r service_name; do service "$service_name" start; done
 ```

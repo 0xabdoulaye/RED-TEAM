@@ -1,38 +1,8 @@
-- blackfield
-- monteverde
-- Mantis
-- Search
-- Reel
-- Reel2
-- TimeLapse (Easy)
-- https://github.com/Ignitetechnologies/HackTheBox-CTF-Writeups
-- https://github.com/Ignitetechnologies/Windows-Privilege-Escalation
+# This is my Todo List for Boxes that i will Pwn
 
-- Absolute I
-- Active E
-- Acute H
-- APT I
-- Blackfield H
-- Cascade M
-- Coder I
-- Escape M
-- Flight H
-- Forest E
-- Fulcrum I
-- Hathor I
-- Intelligence M
-- Mantis H
-- Monteverde M
-- Multimaster I
-- Object H
-- pivotapi I
-- Rabbit I
-- Reel H
-- Resolute M
-- Return E
-- Sauna E
-- Scrambled M
-- Search H
-- Sizzle I
-- StreamIO M
-- Support E
+- [] Forest(10.10.10.161)
+- [x] Active(10.10.10.100)
+- []  Escape(10.10.11.202)
+- [x] Lame(10.10.10.3)
+- [x] Manager(10.10.11.236)
+- [x] Arctic(10.129.136.143)

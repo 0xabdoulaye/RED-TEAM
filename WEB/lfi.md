@@ -48,3 +48,12 @@ Les techniques d'encodage sont souvent utilisées pour contourner les filtres de
 
    -  Standard URL Encoding: ../ becomes %2e%2e%2f
    - Double Encoding: Useful if the application decodes inputs twice. ../ becomes %252e%252e%252f
+   
+
+## LFI2RCE with Session Files
+
+Les fichiers de session PHP peuvent également être utilisés dans une attaque LFI, conduisant à une exécution de code à distance, en particulier si un attaquant peut manipuler les données de session. Dans une application web classique, les données de session sont stockées dans des fichiers sur le serveur. Si un pirate peut injecter du code malveillant dans ces fichiers de session, et si l'application inclut ces fichiers par le biais d'une vulnérabilité LFI, cela peut conduire à l'exécution de code.
+
+
+## LFI2RCE Log Poisoning
+Log Poisoning est une technique par laquelle un attaquant injecte un code exécutable dans le fichier journal d'un serveur web et utilise ensuite une vulnérabilité LFI pour inclure et exécuter ce fichier journal. Cette méthode est particulièrement furtive car les fichiers journaux sont partagés et constituent une partie apparemment inoffensive des opérations du serveur web. Dans une attaque par Log Poisoning, l'attaquant doit d'abord injecter un code PHP malveillant dans un fichier journal. Il peut le faire de différentes manières, par exemple en créant un agent utilisateur malveillant, en envoyant une charge utile via une URL à l'aide de Netcat ou un en-tête referrer que le serveur enregistre. Une fois que le code PHP se trouve dans le fichier journal, l'attaquant peut exploiter une vulnérabilité LFI pour l'inclure dans un fichier PHP standard. Le serveur exécute alors le code malveillant contenu dans le fichier journal, ce qui conduit à un RCE.
