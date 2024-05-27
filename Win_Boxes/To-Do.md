@@ -6,3 +6,5 @@
 - [x] Lame(10.10.10.3)
 - [x] Manager(10.10.11.236)
 - [x] Arctic(10.129.136.143)
+- [ ] Legacy
+- [x] VulnNet: Internal
