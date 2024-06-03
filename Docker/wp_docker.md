@@ -1,7 +1,7 @@
 ```sh
 FROM ubuntu:latest
 
-RUN apt update && apt-get install sudo wget nano -y
+RUN apt update && apt-get install sudo wget nano curl less -y
 RUN sudo apt install apache2 \
                  ghostscript \
                  libapache2-mod-php \
@@ -20,7 +20,8 @@ RUN sudo apt install apache2 \
 RUN sudo apt-get remove mysql-client && sudo apt-get install mysql-server
 RUN service apache2 start
 RUN service mysql start
-RUN sudo chown www-data: /var/www/html
+RUN sudo chown www-data:www-data /var/www/html/*
+RUN sudo chown www-data:www-data /var/www/html
 
 WORKDIR /root
 RUN wget https://wordpress.org/latest.tar.gz 
@@ -33,10 +34,22 @@ RUN wget https://downloads.wordpress.org/plugin/hash-form.1.1.0.zip
 RUN wget https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
 RUN chmod +x wp-cli.phar && sudo mv wp-cli.phar /usr/local/bin/wp
 EXPOSE 80 3306
-
-
+RUN service apache2 start
+RUN service mysql start
+RUN echo "wp plugin delete --path=/var/www/html --all --allow-root" > wp_allow.sh
+RUN echo "wp plugin install hash-form.1.1.0.zip --path=/var/www/html --allow-root" >> wp_allow.sh
+RUN echo "wp plugin activate --all --path=/var/www/html --allow-root" >> wp_allow.sh
+RUN chmod +x wp_allow.sh
+RUN sudo rm /var/www/html/index.html 
+RUN sudo mv /var/www/html/wordpress/* /var/www/html/
+RUN sudo cp /var/www/html/wp-config-sample.php /var/www/html/wp-config.php
+RUN echo "sudo -u www-data sed -i 's/database_name_here/wordpress/' /var/www/html/wp-config.php && sudo -u www-data sed -i 's/username_here/eviladmin/' /var/www/html/wp-config.php && sudo -u www-data sed -i 's/password_here/Password1/' /var/www/html/wp-config.php && sudo -u www-data sed -i 's/localhost/127.0.0.1:3306/' /var/www/html/wp-config.php" > db.sh
+RUN chmod +x db.sh 
+RUN ./db.sh
+RUN service mysql restart
+RUN echo 'mysql  -e "CREATE DATABASE IF NOT EXISTS wordpress; CREATE USER IF NOT EXISTS 'eviladmin'@'localhost' IDENTIFIED BY 'Password1'; GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, ALTER ON wordpress.* TO 'eviladmin'@'localhost'; FLUSH PRIVILEGES;"' > db2.sh
+RUN chmod +x db2.sh
 CMD ["bash"]
-
 
 ```
 
@@ -52,16 +65,6 @@ sudo -u www-data sed -i 's/database_name_here/wordpress/' /var/www/html/wp-confi
 
 
 sudo mysql -u root -e "CREATE DATABASE IF NOT EXISTS wordpress; CREATE USER IF NOT EXISTS 'eviladmin'@'localhost' IDENTIFIED BY 'Password1'; GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, ALTER ON wordpress.* TO 'eviladmin'@'localhost'; FLUSH PRIVILEGES;"
-
-
-wp plugin delete --path=/var/www/html --all --allow-root
-
-wp plugin install hash-form.1.1.0.zip --path=/var/www/html --allow-root
-wp plugin activate --all --path=/var/www/html --allow-root
-
-
-
-
 ```
 
 
