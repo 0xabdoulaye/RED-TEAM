@@ -1,6 +1,6 @@
 This is my learning about windows Privilege Escalation
 ## Weak Registry Autoruns Escalation
-Windows peut être configuré pour exécuter des commandes au démarrage, ce processus est appelé AutoRun. Ces exécutions automatiques sont configurées dans le registre. Si vous êtes en mesure d'écrire dans un exécutable AutoRun et de redémarrer le système (ou d'attendre qu'il soit redémarré), vous pouvez être en mesure d'élever vos privilèges.
+Windows peut être configuré pour exécuter des commandes au démarrage, ce processus est appelé `AutoRun`. Ces exécutions automatiques sont configurées dans le registre. Si vous êtes en mesure d'écrire dans un exécutable AutoRun et de redémarrer le système (ou d'attendre qu'il soit redémarré), vous pouvez être en mesure d'élever vos privilèges.
 
 Pour cela utilisons winpeas pour voir s'il ya des programmes qui ont un droit de autorun
 ```
