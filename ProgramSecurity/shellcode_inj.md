@@ -1,0 +1,6 @@
+Il est trop facile de vivre sa vie sans s'interroger sur les arcanes de la logique qui sous-tend notre réalité. Comment fonctionnent les programmes que nous utilisons tous les jours ? Comment les mystères enfouis dans ces programmes influencent-ils leur sécurité ? Les hackers plongent dans ces secrets, apprenant la danse subtile que suivent tous les programmes, et y insufflant une improvisation inattendue. Dans ce dojo, vous n'apprendrez pas seulement la véritable forme de cette danse, mais vous développerez les compétences nécessaires pour l'influencer.
+
+
+## Intro
+Bienvenue à Shellcode Injection, la plongée profonde dans la chorégraphie de l'exécution du code, où vous ne vous contentez pas de suivre le rythme d'un système, mais où vous prenez les devants, en guidant l'ensemble des processus, des threads et des instructions.
+- Pour les hackers parmi nous, la danse commence avec le shellcode. Mais pour maîtriser cette danse, il ne suffit pas de mémoriser des pas ; il faut aussi improviser, anticiper et s'adapter.
